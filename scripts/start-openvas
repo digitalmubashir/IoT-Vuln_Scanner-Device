@@ -1,0 +1,64 @@
+#!/usr/bin/env bash
+echo "Pushing plugins to Redis..."
+openvas -u
+sleep 5
+X="$(ps -aux | grep -v grep | grep 'openvas: Reloaded')"
+while  [ "${#X}" != 0 ]; do
+    sleep 1
+    X="$(ps -aux | grep -v grep | grep 'openvas: Reloaded')"
+done
+echo "Plugins pushed to Redis."
+
+echo "Starting OSPD..."
+ospd-openvas --log-file=/usr/local/var/log/gvm/ospd.log \
+    --log-level=DEBUG \
+    --unix-socket=/var/run/ospd/ospd.sock \
+    --pid-file=/var/run/ospd/ospd.pid \
+    --lock-file-dir=/var/run/ospd &
+echo "OSPD ready."
+
+echo "Waiting for OSPD socket..."
+sleep 5
+while [ ! -e /var/run/ospd/ospd.sock ]; do
+  sleep 1
+done
+echo "OSPD socket ready."
+
+echo "Waiting for OSPD lock file release..."
+X=$(grep -q "Removed lock from file /var/run/ospd/feed-update.lock" /usr/local/var/log/gvm/ospd.log)$?
+while [ $X -ne 0 ]; do
+  sleep 1
+  X=$(grep -q "Removed lock from file /var/run/ospd/feed-update.lock" /usr/local/var/log/gvm/ospd.log)$?
+done
+echo "OSPD released lock"
+
+echo "Starting GVMD..."
+gvmd --listen-group=service --listen-owner=service \
+     --osp-vt-update=/var/run/ospd/ospd.sock
+echo "Testing GVMD status..."
+sleep 5
+X="$(ps -aux | grep -v grep | grep 'gvmd: Waiting')"
+while  [ "${#X}" == 0 ]; do
+    sleep 1
+    X="$(ps -aux | grep -v grep | grep 'gvmd: Waiting')"
+done
+echo "GVMD ready."
+
+echo "Synchronizing GVMD_DATA, CERT, SCAP and NVT cache..."
+sleep 30
+X="$(ps -aux | grep -v grep | grep 'gvmd: Syncing GVMD_DATA\|gvmd: Syncing CERT\|gvmd: Syncing SCAP\|gvmd: Reloading NVTs')"
+while  [ "${#X}" != 0 ]; do
+    sleep 5
+    X="$(ps -aux | grep -v grep | grep 'gvmd: Syncing GVMD_DATA\|gvmd: Syncing CERT\|gvmd: Syncing SCAP\|gvmd: Reloading NVTs')"
+    echo "Synchronization in progress..."
+done
+echo "GVMD_DATA, CERT, SCAP and NVT cache synchronized."
+
+echo "Making sure that configs are loaded to gmvd DB..."
+X="$(psql  -d gvmd -c "SELECT count(*) FROM configs " |grep -A1 "\-\-" |tail -1 |tr -d " ")"
+while  [ "${X}" == 0 ]; do
+    sleep 5
+    X="$(psql  -d gvmd -c "SELECT count(*) FROM configs " |grep -A1 "\-\-" |tail -1 |tr -d " ")"
+    echo "Waiting for configs to get loaded to DB..."
+done
+echo "Configs table in gmvd DB has been populated with $X values"

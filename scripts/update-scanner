@@ -1,0 +1,12 @@
+#!/bin/bash
+start-services
+
+echo "Syncing OpenVAS feeds..."
+sync-nvts
+sleep 10
+sync-certs
+sleep 10
+sync-scap
+echo "OpenVAS feeds synced."
+
+start-openvas
