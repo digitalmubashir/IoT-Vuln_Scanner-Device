@@ -53,7 +53,8 @@ Preparing the Pi
 
 - Copy and paste the following command into the terminal. Note: You will be prompted to enter the email address you want to receive the report to when the scan finishes.
 
->  https://raw.githubusercontent.com/digitalmubashir/IoT-Vuln_Scanner-Device/master/rpi/rpi-install.sh
+>  /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/digitalmubashir/IoT-Vuln_Scanner-Device/master/rpi/rpi-install.sh)"
+
 
 - Once the script finishes the installation process, unplug your RPi, and all of its connections (HDMI, mouse, keyboard, etc.).
 
