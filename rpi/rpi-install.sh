@@ -8,8 +8,8 @@ cd ~
 mkdir /home/pi/rpi-scanner
 (crontab -l ; echo '@reboot /bin/bash -c ". ~/.bashrc; /home/pi/rpi-scanner/rpi-scan.sh > /tmp/rpi-scanner.txt 2>&1"') | crontab -
 
-read -p "Please enter your email address: " email
-# Learned about heredoc magic: https://unix.stackexchange.com/questions/138418/passing-a-variable-to-a-bash-script-that-uses-eof-and-considers-the-variable-a
+read -p "Please enter your email address for results: " email
+
 cat > /home/pi/rpi-scanner/rpi-scan.sh <<'EOF'
 #!/usr/bin/env bash
 
