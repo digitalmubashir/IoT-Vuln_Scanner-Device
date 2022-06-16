@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Automation script for Greenbone scanner 20.08."""
+"""Automation script for IOT Scanner."""
 
 import subprocess
 import argparse
